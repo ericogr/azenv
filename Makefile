@@ -13,14 +13,15 @@ GOBIN ?= $(GOPATH)/bin
 GOLINT ?= $(GOBIN)/golint
 GOSEC ?= $(GOBIN)/gosec
 GO_MINOR_VERSION = $(shell $(GO) version | cut -c 14- | cut -d' ' -f1 | cut -d'.' -f2)
-GOVULN_MIN_VERSION = 18
-GO_VERSION = 1.18
+GOVULN_MIN_VERSION = 17
+GO_VERSION = 1.18.7
 
 default:
 	$(MAKE) build
 
 install-govulncheck:
 	@if [ $(GO_MINOR_VERSION) -gt $(GOVULN_MIN_VERSION) ]; then \
+	    echo "INSTALLING GOVULNCHECK"; \
 		go install golang.org/x/vuln/cmd/govulncheck@latest; \
 	fi
 
