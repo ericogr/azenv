@@ -108,11 +108,11 @@ func (k *Kubernetes) CreateKubeconfig(serviceAccount *v1.ServiceAccount, namespa
 	kubeConfig := configFlags.ToRawKubeConfigLoader()
 	rawConfig, err := kubeConfig.RawConfig()
 	if err != nil {
-		return "", fmt.Errorf("Failed to get current kubeconfig data")
+		return "", fmt.Errorf("failed to get current kubeconfig data")
 	}
 
 	ca := []byte(rawConfig.Clusters[rawConfig.Contexts[rawConfig.CurrentContext].Cluster].CertificateAuthorityData)
-	if ca == nil || len(ca) == 0 {
+	if len(ca) == 0 {
 		caFile := rawConfig.Clusters[rawConfig.Contexts[rawConfig.CurrentContext].Cluster].CertificateAuthority
 		ca, err = ioutil.ReadFile(caFile)
 		if err != nil {
@@ -162,9 +162,12 @@ func (k *Kubernetes) CreateKubeconfig(serviceAccount *v1.ServiceAccount, namespa
 	}
 	var printObj printers.ResourcePrinterFunc = printer.PrintObj
 	var out bytes.Buffer
-	printObj.PrintObj(convertedObj, &out)
+	err = printObj.PrintObj(convertedObj, &out)
+	if err != nil {
+		return "", err
+	}
 
-	return string(out.Bytes()), nil
+	return out.String(), nil
 }
 
 func (k *Kubernetes) GetNamespace(ctx context.Context, namespaceName string) (*v1.Namespace, error) {

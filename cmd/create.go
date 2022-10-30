@@ -69,16 +69,28 @@ func init() {
 	rootCmd.AddCommand(createCmd)
 
 	createCmd.PersistentFlags().StringP("project", "p", "", "AzureDevOps project name with organization (ex: myorg/myproject)")
-	createCmd.MarkPersistentFlagRequired("project")
+	err := createCmd.MarkPersistentFlagRequired("project")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 
 	createCmd.PersistentFlags().StringP("name", "n", "", "AzureDevOps environment name")
-	createCmd.MarkPersistentFlagRequired("name")
+	err = createCmd.MarkPersistentFlagRequired("name")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 
 	createCmd.PersistentFlags().StringP("service-account", "a", "", "Kubernetes service account name with namespace (ex: namespace/service-account-name)")
-	createCmd.MarkPersistentFlagRequired("service-account")
+	err = createCmd.MarkPersistentFlagRequired("service-account")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 
 	createCmd.PersistentFlags().StringP("service-connection", "c", "", "AzureDevOps service connection name")
-	createCmd.MarkPersistentFlagRequired("service-connection")
+	err = createCmd.MarkPersistentFlagRequired("service-connection")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 
 	createCmd.PersistentFlags().StringSliceP("namespace-label", "l", nil, "List of namespace labels")
 }

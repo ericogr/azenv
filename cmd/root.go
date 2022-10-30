@@ -28,5 +28,6 @@ func Execute() {
 func init() {
 	rootCmd.PersistentFlags().StringP("type", "t", "kubernetes", "Environment resource type (for now, only Kubernetes is supported)")
 	rootCmd.PersistentFlags().String("pat", "", "AzureDevOps Personal Access Token (PAT)")
-	rootCmd.MarkPersistentFlagRequired("pat")
+	err := rootCmd.MarkPersistentFlagRequired("pat")
+	fmt.Println(err.Error())
 }
