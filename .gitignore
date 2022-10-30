@@ -17,3 +17,6 @@ azenv
 
 # Visual Studio Code
 .vscode/launch.json
+
+# SBOMs generated during CI
+/bom.json
