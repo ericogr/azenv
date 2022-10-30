@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
 	v1 "k8s.io/api/core/v1"
@@ -114,7 +114,7 @@ func (k *Kubernetes) CreateKubeconfig(serviceAccount *v1.ServiceAccount, namespa
 	ca := []byte(rawConfig.Clusters[rawConfig.Contexts[rawConfig.CurrentContext].Cluster].CertificateAuthorityData)
 	if len(ca) == 0 {
 		caFile := rawConfig.Clusters[rawConfig.Contexts[rawConfig.CurrentContext].Cluster].CertificateAuthority
-		ca, err = ioutil.ReadFile(caFile)
+		ca, err = os.ReadFile(caFile)
 		if err != nil {
 			return "", err
 		}
