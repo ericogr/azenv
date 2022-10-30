@@ -7,6 +7,8 @@ To run this tool, you need:
 - Azure DevOps PAT with permissions to manage environments, service connections and read projects
 - Kubernetes access to create and update namespace (for Kubernetes resource)
 - Kubernetes access to create service accounts (for Kubernetes resource)
+- Kubernetes access to create namespaces (for Kubernetes resource)
+- Kubernetes access to get secrets (for Kubernetes resource)
 - Kubernetes access to generate tokens kubernetes >= 1.24 (for Kubernetes resource)
 
 ## Resources
@@ -26,10 +28,12 @@ See below a list of resources that can be configured by this tool:
 ```sh
 ./azenv \
   --pat <generate-azure-devops-pat> \
-  --type kubernetes \
-  create \
+  create kubernetes \
   --project <organization-name>/<project-name> \
   --name <environment-name> \
   --service-account <service-account-name> \
-  --service-connection <service-connection-name>
+  --service-connection <service-connection-name> \
+  --namespace-label label1=value1 \
+  --namespace-label label2=value2 \
+  --show-kubeconfig true
 ```
