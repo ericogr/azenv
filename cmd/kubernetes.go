@@ -244,7 +244,7 @@ func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceSer
 		serviceConnection, err = azdevOps.CreateServiceEndpoint(
 			project.ID,
 			serviceConnectionName,
-			fmt.Sprintf("Created by cli az-env-k8s-creation at %s", time.Now().Local().Format("2 Jan 2006 15:04:05")),
+			fmt.Sprintf("Created by cli azenv at %s", time.Now().Local().Format("2 Jan 2006 15:04:05")),
 			kubeconfig,
 		)
 		if err != nil {
