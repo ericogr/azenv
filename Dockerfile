@@ -3,13 +3,7 @@ FROM golang:${GO_VERSION}-alpine AS builder
 RUN apk add --no-cache ca-certificates make git curl gcc libc-dev
 RUN mkdir -p /build
 WORKDIR /build
-COPY go.mod /build
-COPY go.sum /build
-COPY main.go /build
-COPY cmd /build/cmd
-COPY services /build/services
-COPY Makefile /build
-COPY .git /build/.git
+COPY . /build/
 RUN go mod download
 RUN make build-linux
 
