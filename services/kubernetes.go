@@ -60,7 +60,7 @@ func (k *Kubernetes) GetServiceAccount(ctx context.Context, namespace, serviceAc
 		Get(ctx, serviceAccountName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return nil, ERROR_RESOURCE_NOT_FOUND
+			return nil, &ResourceNotFoundError{"serviceAccount"}
 		}
 
 		return nil, err
@@ -94,7 +94,7 @@ func (k *Kubernetes) GetSecret(ctx context.Context, namespace, secretName string
 		Get(ctx, secretName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return nil, ERROR_RESOURCE_NOT_FOUND
+			return nil, &ResourceNotFoundError{resource: "secret"}
 		}
 
 		return nil, err
@@ -177,7 +177,7 @@ func (k *Kubernetes) GetNamespace(ctx context.Context, namespaceName string) (*v
 		Get(ctx, namespaceName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return nil, ERROR_RESOURCE_NOT_FOUND
+			return nil, &ResourceNotFoundError{resource: "namespace"}
 		}
 
 		return nil, err

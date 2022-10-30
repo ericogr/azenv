@@ -1,6 +1,8 @@
 package services
 
-import "errors"
+import (
+	"fmt"
+)
 
 const (
 	URL_AZUREDEVOPS_ENVIRONMENT           = "https://dev.azure.com/{organization}/{project}/_apis/distributedtask/environments?api-version=6.1-preview.1"
@@ -11,9 +13,23 @@ const (
 	KUBERNETES_DEFAULT_CONTEXT_NAME       = "default"
 )
 
-var (
-	ERROR_RESOURCE_NOT_FOUND = errors.New("Resource not found!")
-)
+type ResourceNotFoundError struct {
+	resource string
+}
+
+func (e *ResourceNotFoundError) Error() string {
+	return fmt.Sprintf("resource %s not found", e.resource)
+}
+
+func IgnoreResourceNotFoundError(err error) error {
+	_, ok := err.(*ResourceNotFoundError)
+
+	if ok {
+		return nil
+	}
+
+	return err
+}
 
 type Error string
 

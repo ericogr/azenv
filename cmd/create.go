@@ -6,7 +6,6 @@ import (
 
 	"github.com/ericogr/azenv/services"
 
-	"errors"
 	"fmt"
 	"strings"
 
@@ -56,11 +55,16 @@ var createCmd = &cobra.Command{
 			return err
 		}
 
+		showKubeconfig, err := cmd.PersistentFlags().GetBool("show-kubeconfig")
+		if err != nil {
+			return err
+		}
+
 		switch resourceType {
 		case "kubernetes":
-			return createKubernetes(pat, organizationProject, name, serviceAccount, serviceConnection, namespaceLabels)
+			return createKubernetes(pat, organizationProject, name, serviceAccount, serviceConnection, namespaceLabels, showKubeconfig)
 		default:
-			return fmt.Errorf("Resource type not supported: %s (for now, only kubernetes is supported)", resourceType)
+			return fmt.Errorf("resource type not supported: %s (for now, only kubernetes is supported)", resourceType)
 		}
 	},
 }
@@ -93,14 +97,15 @@ func init() {
 	}
 
 	createCmd.PersistentFlags().StringSliceP("namespace-label", "l", nil, "List of namespace labels")
+	createCmd.PersistentFlags().Bool("show-kubeconfig", false, "Show kubeconfig if it was created, default=false")
 }
 
-func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceServiceAccountName, serviceConnectionName string, namespaceLabels []string) error {
+func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceServiceAccountName, serviceConnectionName string, namespaceLabels []string, showKubeconfig bool) error {
 	// environment
 	// -----------
 	azDevOpsOrgProjParts := strings.Split(azDevOpsOrgProjectName, "/")
 	if len(azDevOpsOrgProjParts) != 2 {
-		return fmt.Errorf("Invalid format for Azure DevOps organization project, please use like this: organization/project-name\n")
+		return fmt.Errorf("invalid format for Azure DevOps organization project, please use like this: organization/project-name")
 	}
 	azDevOpsOrganizationName := azDevOpsOrgProjParts[0]
 	azDevOpsProjectName := azDevOpsOrgProjParts[1]
@@ -111,13 +116,8 @@ func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceSer
 
 	// looking for specified azDevOpsEnvironment
 	azDevOpsEnvironment, err := azdevOps.FindEnvironment(azDevOpsProjectName, environmentName)
-	if err != nil {
-		switch {
-		case errors.Is(err, services.ERROR_RESOURCE_NOT_FOUND):
-			fmt.Printf("Environment %s not found\n", environmentName)
-		default:
-			return fmt.Errorf("Error looking for environment %s: %v\n", environmentName, err)
-		}
+	if services.IgnoreResourceNotFoundError(err) != nil {
+		return fmt.Errorf("error looking for environment %s: %v", environmentName, err)
 	}
 
 	if azDevOpsEnvironment == nil {
@@ -136,7 +136,7 @@ func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceSer
 	// split namespace from serviceaccount name
 	namespaceServiceAccountNameParts := strings.Split(namespaceServiceAccountName, "/")
 	if len(namespaceServiceAccountNameParts) != 2 {
-		return fmt.Errorf("Invalid format for service-account, please use like this: namespace/serviceaccount-name\n")
+		return fmt.Errorf("invalid format for service-account, please use like this: namespace/serviceaccount-name")
 	}
 
 	// looking for specified kubernetes service account
@@ -148,18 +148,14 @@ func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceSer
 	}
 	ctx := context.Background()
 	namespace, err := kubernetes.GetNamespace(ctx, namespaceName)
-	if err != nil {
-		switch {
-		case errors.Is(err, services.ERROR_RESOURCE_NOT_FOUND):
-			fmt.Printf("Namespace %s not found\n", namespaceName)
-		default:
-			return fmt.Errorf("Error looking for namespace %s: %v\n", namespaceName, err)
-		}
+	if services.IgnoreResourceNotFoundError(err) != nil {
+		return fmt.Errorf("error looking for namespace %s: %v", namespaceName, err)
 	}
+
 	if namespace == nil {
 		namespace, err = kubernetes.CreateNamespace(ctx, namespaceName)
 		if err != nil {
-			return fmt.Errorf("Error creating namespace %s: %v\n", namespaceName, err)
+			return fmt.Errorf("error creating namespace %s: %v", namespaceName, err)
 		}
 
 		fmt.Printf("Namespace %s created\n", namespace.Name)
@@ -169,11 +165,11 @@ func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceSer
 	if len(namespaceLabels) > 0 {
 		namespaceLabelMap, err := stringArrayToMap(namespaceLabels)
 		if err != nil {
-			return fmt.Errorf("Error processing specified labels: %v\n", err)
+			return fmt.Errorf("error processing specified labels: %v", err)
 		}
 		err = kubernetes.UpdateNamespaceLabels(ctx, namespaceName, namespaceLabelMap)
 		if err != nil {
-			return fmt.Errorf("Error updating namespace %s labels: %v\n", namespaceName, err)
+			return fmt.Errorf("error updating namespace %s labels: %v", namespaceName, err)
 		}
 	}
 
@@ -182,30 +178,20 @@ func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceSer
 
 	// looking for specified service connection
 	serviceConnection, err := azdevOps.FindServiceEndpoint(azDevOpsProjectName, serviceConnectionName)
-	if err != nil {
-		switch {
-		case errors.Is(err, services.ERROR_RESOURCE_NOT_FOUND):
-			fmt.Printf("Service connection %s not found\n", serviceConnectionName)
-		default:
-			return fmt.Errorf("Error looking for service connection %s: %v\n", serviceConnectionName, err)
-		}
+	if services.IgnoreResourceNotFoundError(err) != nil {
+		return fmt.Errorf("error looking for service connection %s: %v", serviceConnectionName, err)
 	}
 
 	if serviceConnection == nil {
 		k8sServiceAccount, err := kubernetes.GetServiceAccount(ctx, namespaceName, serviceAccountName)
-		if err != nil {
-			switch {
-			case errors.Is(err, services.ERROR_RESOURCE_NOT_FOUND):
-				fmt.Printf("Service account %s not found\n", serviceAccountName)
-			default:
-				return fmt.Errorf("Error looking for service account %s: %v\n", serviceAccountName, err)
-			}
+		if services.IgnoreResourceNotFoundError(err) != nil {
+			return fmt.Errorf("error looking for service account %s: %v", serviceAccountName, err)
 		}
 
 		if k8sServiceAccount == nil {
 			k8sServiceAccount, err = kubernetes.CreateServiceAccount(ctx, namespaceName, serviceAccountName)
 			if err != nil {
-				return fmt.Errorf("Error creating service account %s: %v\n", serviceAccountName, err)
+				return fmt.Errorf("error creating service account %s: %v", serviceAccountName, err)
 			}
 
 			fmt.Printf("Kubernetes service account %s/%s created\n", namespaceName, serviceAccountName)
@@ -238,7 +224,7 @@ func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceSer
 			time.Sleep(250)
 			k8sServiceAccount, err = kubernetes.GetServiceAccount(ctx, namespaceName, serviceAccountName)
 			if err != nil {
-				return fmt.Errorf("Error looking for service account %s: %v\n", serviceAccountName, err)
+				return fmt.Errorf("error looking for service account %s: %v", serviceAccountName, err)
 			}
 		}
 
@@ -248,7 +234,7 @@ func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceSer
 		} else {
 			serviceAccountToken, err = kubernetes.CreateKubernetesToken(ctx, namespaceName, serviceAccountName)
 			if err != nil {
-				return fmt.Errorf("No usable secret with token for service account and impossible to generate token: %v\n", err)
+				return fmt.Errorf("no usable secret with token for service account and impossible to generate token: %v", err)
 			}
 
 			fmt.Printf("Kubernetes token created for service account %s\n", serviceAccountName)
@@ -256,15 +242,17 @@ func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceSer
 
 		kubeconfig, err := kubernetes.CreateKubeconfig(k8sServiceAccount, namespaceName, serviceAccountToken)
 		if err != nil {
-			return fmt.Errorf("Error generating kubernetes kubeconfig: %v\n", err.Error())
+			return fmt.Errorf("error generating kubernetes kubeconfig: %v", err.Error())
+		}
+		fmt.Printf("Kubernetes kubeconfig created\n")
+
+		if showKubeconfig {
+			fmt.Println(kubeconfig)
 		}
 
-		fmt.Printf("<<Created_kubeconfig\n")
-		fmt.Println(kubeconfig)
-		fmt.Printf("Created_kubeconfig\n")
 		project, err := azdevOps.FindProject(azDevOpsProjectName)
 		if err != nil {
-			return fmt.Errorf("Error looking for Azure DevOps project %s: %v\n", azDevOpsProjectName, err)
+			return fmt.Errorf("error looking for Azure DevOps project %s: %v", azDevOpsProjectName, err)
 		}
 
 		serviceConnection, err = azdevOps.CreateServiceEndpoint(
@@ -295,7 +283,7 @@ func stringArrayToMap(arrayItems []string) (map[string]string, error) {
 	for _, item := range arrayItems {
 		sep := strings.Split(item, "=")
 		if len(sep) != 2 {
-			return nil, fmt.Errorf("Array with invalid format %s. It must be like this: key=value", item)
+			return nil, fmt.Errorf("array with invalid format %s. It must be like this: key=value", item)
 		}
 		mapRet[sep[0]] = sep[1]
 	}

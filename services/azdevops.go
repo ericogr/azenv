@@ -59,7 +59,7 @@ func (az *AzDevOps) FindEnvironment(project, name string) (*AzDevopsEnvironmentI
 		}
 	}
 
-	return nil, ERROR_RESOURCE_NOT_FOUND
+	return nil, &ResourceNotFoundError{resource: "environment"}
 }
 
 func (az *AzDevOps) FindServiceEndpoint(project, name string) (*AzDevopsServiceEndpoint, error) {
@@ -88,7 +88,7 @@ func (az *AzDevOps) FindServiceEndpoint(project, name string) (*AzDevopsServiceE
 		}
 	}
 
-	return nil, ERROR_RESOURCE_NOT_FOUND
+	return nil, &ResourceNotFoundError{resource: "serviceEndpoint"}
 }
 
 func (az *AzDevOps) FindProject(name string) (*AzDevOpsProject, error) {
@@ -114,7 +114,7 @@ func (az *AzDevOps) FindProject(name string) (*AzDevOpsProject, error) {
 		}
 	}
 
-	return nil, ERROR_RESOURCE_NOT_FOUND
+	return nil, &ResourceNotFoundError{resource: "project"}
 }
 
 func (az *AzDevOps) CreateServiceEndpoint(projectId, name, description, kubeconfig string) (*AzDevopsServiceEndpoint, error) {
@@ -183,7 +183,7 @@ func (az *AzDevOps) CreateResourceEnvironment(name, projectName, namespace, serv
 	}
 
 	if resp.StatusCode() < 200 || resp.StatusCode() > 299 {
-		return fmt.Errorf("Error creating service endpoint: %s", resp.Status())
+		return fmt.Errorf("Error creating service endpoint: %s. Please check if it's already exists", resp.Status())
 	}
 
 	return nil
