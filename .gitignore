@@ -1,12 +1,35 @@
+# transient files
+/image
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
-azenv
+*.o
+*.a
+*.swp
+/azenv
+
+# Folders
+_obj
+_test
+vendor
+dist
+
+# Architecture specific extensions/prefixes
+*.[568vq]
+[568vq].out
+
+*.cgo1.go
+*.cgo2.c
+_cgo_defun.c
+_cgo_gotypes.go
+_cgo_export.*
 
 # Test binary, built with `go test -c`
+_testmain.go
 *.test
 
 # Output of the go coverage tool, specifically when used with LiteIDE
@@ -15,8 +38,9 @@ azenv
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-# Visual Studio Code
-.vscode/launch.json
+# IDEs
+.vscode
+.idea
 
 # SBOMs generated during CI
 /bom.json

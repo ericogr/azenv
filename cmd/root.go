@@ -11,7 +11,7 @@ var rootCmd = &cobra.Command{
 	Use:   "azenv",
 	Short: "AzureDevOps Environment Management",
 	Long: fmt.Sprintf(`This tool can manage Azure DevOps environments (for now, only Kubernetes is supported)
-v%s(%s) - %s
+%s(%s) - %s
 
 Example:
 azenv create kubernetes \

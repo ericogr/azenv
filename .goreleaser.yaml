@@ -16,6 +16,6 @@ builds:
   goarch:
   - amd64
   - arm64
-  ldflags: -X main.Version={{.Version}} -X main.GitTag={{.Tag}} -X main.BuildDate={{.Date}}
+  ldflags: -X github.com/ericogr/azenv/cmd.Version={{.Version}} -X github.com/ericogr/azenv/cmd.GitTag={{.Tag}} -X github.com/ericogr/azenv/cmd.BuildDate={{.Date}}
   env:
   - CGO_ENABLED=0
