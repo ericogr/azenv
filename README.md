@@ -65,7 +65,7 @@ See above an example, the fields are self-explanatory. Replace <something> by yo
   create kubernetes \
   --project <organization-name>/<project-name> \
   --name <environment-name> \
-  --service-account <service-account-name> \
+  --service-account <namespace>/<service-account-name> \
   --service-connection <service-connection-name> \
   --namespace-label label1=value1 \
   --namespace-label label2=value2 \
