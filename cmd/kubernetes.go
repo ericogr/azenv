@@ -30,9 +30,10 @@ import (
 
 // kubernetesCmd represents the kubernetes command
 var kubernetesCmd = &cobra.Command{
-	Use:   "kubernetes",
-	Short: "Create a new Kubernetes environment",
-	Long:  `Use this command to create a new AzureDevOps Kubernetes Environment`,
+	PreRun: toggleDebug,
+	Use:    "kubernetes",
+	Short:  "Create a new Kubernetes environment",
+	Long:   `Use this command to create a new AzureDevOps Kubernetes Environment`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		pat, err := cmd.Flags().GetString("pat")
 		if err != nil {
@@ -79,7 +80,7 @@ func init() {
 	kubernetesCmd.Flags().StringP("service-account", "a", "", "[required] Kubernetes service account name with namespace (ex: namespace/service-account-name)")
 	err := kubernetesCmd.MarkFlagRequired("service-account")
 	if err != nil {
-		fmt.Println(err.Error())
+		logger.Println(err.Error())
 	}
 
 	kubernetesCmd.Flags().StringSliceP("namespace-label", "l", nil, "[default=] If a new Kubernetes namespace is created, these are the labels")
@@ -113,7 +114,9 @@ func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceSer
 			return err
 		}
 
-		fmt.Printf("Created environment %v\n", azDevOpsEnvironment.Name)
+		logger.Printf("Created environment %s\n", azDevOpsEnvironment.Name)
+	} else {
+		logger.Printf("Environment %s already exists\n", azDevOpsEnvironment.Name)
 	}
 
 	// namespace
@@ -144,7 +147,9 @@ func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceSer
 			return fmt.Errorf("error creating namespace %s: %v", namespaceName, err)
 		}
 
-		fmt.Printf("Namespace %s created\n", namespace.Name)
+		logger.Printf("Namespace %s created\n", namespace.Name)
+	} else {
+		logger.Printf("Namespace %s already exists\n", azDevOpsEnvironment.Name)
 	}
 
 	// update namespace labels
@@ -180,7 +185,9 @@ func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceSer
 				return fmt.Errorf("error creating service account %s: %v", serviceAccountName, err)
 			}
 
-			fmt.Printf("Kubernetes service account %s/%s created\n", namespaceName, serviceAccountName)
+			logger.Printf("Kubernetes service account %s/%s created\n", namespaceName, serviceAccountName)
+		} else {
+			logger.Printf("Kubernetes service account %s/%s already exists\n", namespaceName, serviceAccountName)
 		}
 
 		var secret *v1.Secret
@@ -189,7 +196,7 @@ func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceSer
 				for _, secretRef := range k8sServiceAccount.Secrets {
 					tempSecret, err := kubernetes.GetSecret(ctx, namespaceName, secretRef.Name)
 					if err != nil {
-						fmt.Printf("Error looking for kubernetes secret %s inside service account %s: %v\n", secretRef.Name, serviceAccountName, err)
+						logger.Printf("Error looking for kubernetes secret %s inside service account %s: %v\n", secretRef.Name, serviceAccountName, err)
 						continue
 					}
 
@@ -220,20 +227,20 @@ func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceSer
 		} else {
 			serviceAccountToken, err = kubernetes.CreateKubernetesToken(ctx, namespaceName, serviceAccountName)
 			if err != nil {
-				return fmt.Errorf("no usable secret with token for service account and impossible to generate token: %v", err)
+				return fmt.Errorf("no suitable secret with token for service account, impossible to generate token: %v", err)
 			}
 
-			fmt.Printf("Kubernetes token created for service account %s\n", serviceAccountName)
+			logger.Printf("Kubernetes token created for service account %s\n", serviceAccountName)
 		}
 
 		kubeconfig, err := kubernetes.CreateKubeconfig(k8sServiceAccount, namespaceName, serviceAccountToken)
 		if err != nil {
 			return fmt.Errorf("error generating kubernetes kubeconfig: %v", err.Error())
 		}
-		fmt.Printf("Kubernetes kubeconfig created\n")
+		logger.Printf("Kubernetes kubeconfig created\n")
 
 		if showKubeconfig {
-			fmt.Println(kubeconfig)
+			logger.Println(kubeconfig)
 		}
 
 		project, err := azdevOps.FindProject(azDevOpsProjectName)
@@ -251,7 +258,9 @@ func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceSer
 			return err
 		}
 
-		fmt.Printf("Created service connection %v\n", serviceConnectionName)
+		logger.Printf("Created service connection %s\n", serviceConnectionName)
+	} else {
+		logger.Printf("Created service connection %s already exists\n", serviceConnectionName)
 	}
 
 	err = azdevOps.CreateResourceEnvironment(serviceConnectionName, azDevOpsProjectName, namespaceName, serviceConnection.Id, azDevOpsEnvironment.Id)
@@ -259,7 +268,7 @@ func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceSer
 		return err
 	}
 
-	fmt.Printf("Created resource %s inside environment %s\n", serviceConnectionName, azDevOpsEnvironment.Name)
+	logger.Printf("Created resource %s inside environment %s\n", serviceConnectionName, azDevOpsEnvironment.Name)
 
 	return nil
 }

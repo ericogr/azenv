@@ -30,7 +30,7 @@ See below a list of resources that can be configured by this tool:
 
 > **_NOTE:_** In some cases, cli will try to use existent resource before create a new one.
 
-## Kubernetes needed permissions
+## Kubernetes required permissions
 To create and get some resources, cli will need some permissions. See an example of ClusterRole below:
 
 ```yaml
@@ -69,7 +69,7 @@ See above an example, the fields are self-explanatory. Replace <something> by yo
   --service-connection <service-connection-name> \
   --namespace-label label1=value1 \
   --namespace-label label2=value2 \
-  --show-kubeconfig false
+  --show-kubeconfig=false
 ```
 
 [Azure DevOps]: https://azure.microsoft.com/en-us/free/
