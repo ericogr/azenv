@@ -33,6 +33,33 @@ func (k *Kubernetes) getConfig() *rest.Config {
 	return k.Config
 }
 
+func (k *Kubernetes) CreateSecret(ctx context.Context, namespace, name, serviceAccountName string) (*v1.Secret, error) {
+	config := k.getConfig()
+	clientset := kubernetes.NewForConfigOrDie(config)
+	secret, err := clientset.
+		CoreV1().
+		Secrets(namespace).
+		Create(
+			ctx,
+			&v1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: namespace,
+					Annotations: map[string]string{
+						"kubernetes.io/service-account.name": serviceAccountName,
+					},
+				},
+				Type: v1.SecretTypeServiceAccountToken,
+			},
+			metav1.CreateOptions{},
+		)
+	if err != nil {
+		return nil, err
+	}
+
+	return secret, nil
+}
+
 func (k *Kubernetes) CreateKubernetesToken(ctx context.Context, namespace, serviceAccountName string) (string, error) {
 	config := k.getConfig()
 	clientset := kubernetes.NewForConfigOrDie(config)
@@ -103,7 +130,7 @@ func (k *Kubernetes) GetSecret(ctx context.Context, namespace, secretName string
 	return secret, nil
 }
 
-func (k *Kubernetes) CreateKubeconfig(serviceAccount *v1.ServiceAccount, namespaceName, token string) (string, error) {
+func (k *Kubernetes) CreateKubeconfig(serviceAccountName, namespaceName, token string) (string, error) {
 	var configFlags *genericclioptions.ConfigFlags = genericclioptions.NewConfigFlags(true)
 	kubeConfig := configFlags.ToRawKubeConfigLoader()
 	rawConfig, err := kubeConfig.RawConfig()
@@ -137,14 +164,14 @@ func (k *Kubernetes) CreateKubeconfig(serviceAccount *v1.ServiceAccount, namespa
 			},
 		},
 		AuthInfos: map[string]*clientcmdapi.AuthInfo{
-			serviceAccount.GetName(): {
+			serviceAccountName: {
 				Token: token,
 			},
 		},
 		Contexts: map[string]*clientcmdapi.Context{
 			KUBERNETES_DEFAULT_CONTEXT_NAME: {
 				Cluster:   KUBERNETES_DEFAULT_CONTEXT_NAME,
-				AuthInfo:  serviceAccount.GetName(),
+				AuthInfo:  serviceAccountName,
 				Namespace: namespaceName,
 			},
 		},

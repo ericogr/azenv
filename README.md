@@ -1,36 +1,34 @@
 # Azure DevOps Environment Creation
-Use this tool to set up Azure DevOps [Environment]. An [Environment] is a collection of resources that can be targeted by deployments from a pipeline.
+Use this tool to set up an Azure DevOps [Environment]. An [Environment] is a collection of resources that can be targeted by deployments from a pipeline.
 
 ## Requirements
 To run this tool, you need:
 - [Azure DevOps] account
-- Azure DevOps [PAT] with permissions:
+- Azure DevOps [PAT] with the following permissions:
   - Environment (Read & manage)
   - Service Connections (Read, query, & manage)
 - For Kubernetes resources:
   - [Kubernetes Cluster]
-  - [RBAC] access to:
-    - create and update namespace
-    - create service account
-    - create namespace
-    - get secret
-    - generate token (Kubernetes >= 1.24)
+  - [RBAC] access with the following permissions:
+    - get, create and patch namespaces
+    - get and create serviceaccounts
+    - get and create secrets
 
-## Resources
-See below a list of resources that can be configured by this tool:
+# Kubernetes Resources
+For Kubernetes resources these are the resources that can be configured:
 
-|Resource|Type|Use existent|Description|
-|--------|----|--------------------------|-----------|
+|Resource|Type|Can use existent|Notes|
+|--------|----|----------------|-----|
 |Environment|Azure DevOps|Yes|-|
-|Environment Resource|Azure DevOps|No|Must be deleted before create a new one|
+|Environment Resource|Azure DevOps|No|it must be deleted before creating a new one.|
 |Service Connection|Azure DevOps|Yes|-|
 |Namespace|Kubernetes|Yes|-|
-|Service Account|Kubernetes|Yes|If created, you have to add binding manually|
-|Token|Kubernetes|Yes|It will be generated for kubernetes >=1.24 with 10 years expiration|
+|Service Account|Kubernetes|Yes|you have to create role/clusterrole and bind to service account your own|
+|Secret|Kubernetes|Yes|-|
 
 > **_NOTE:_** In some cases, cli will try to use existent resource before create a new one.
 
-## Kubernetes required permissions
+## Kubernetes detailed permissions
 To create and get some resources, cli will need some permissions. See an example of ClusterRole below:
 
 ```yaml
@@ -44,18 +42,19 @@ rules:
   resources:
   - namespaces
   - serviceaccounts
+  - secret
   verbs:
   - get
   - create
 - apiGroups:
   - ""
   resources:
-  - serviceaccounts/token
+  - namespaces
   verbs:
-  - create
+  - patch
 ```
 
-# Usage example
+## Usage example
 
 See above an example, the fields are self-explanatory. Replace <something> by your own values.
 

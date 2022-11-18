@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -190,50 +190,51 @@ func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceSer
 			logger.Printf("Kubernetes service account %s/%s already exists\n", namespaceName, serviceAccountName)
 		}
 
-		var secret *v1.Secret
-		for tries := 0; tries < 5; tries++ {
-			if len(k8sServiceAccount.Secrets) > 0 {
-				for _, secretRef := range k8sServiceAccount.Secrets {
-					tempSecret, err := kubernetes.GetSecret(ctx, namespaceName, secretRef.Name)
-					if err != nil {
-						logger.Printf("Error looking for kubernetes secret %s inside service account %s: %v\n", secretRef.Name, serviceAccountName, err)
-						continue
-					}
+		// look up the secret
+		secretName := fmt.Sprintf("%s-token", serviceAccountName)
+		secret, err := kubernetes.GetSecret(ctx, namespaceName, secretName)
+		if services.IgnoreResourceNotFoundError(err) != nil {
+			return fmt.Errorf("error looking for secret %s: %v", secretName, err)
+		}
 
-					if tempSecret.Type == v1.SecretTypeServiceAccountToken {
-						secret = tempSecret
-						break
-					}
-				}
-
-				if secret != nil {
-					break
-				}
+		if secret == nil {
+			secret, err = kubernetes.CreateSecret(ctx, namespaceName, secretName, serviceAccountName)
+			if err != nil {
+				return fmt.Errorf("error creating secret for service account %s: %v", serviceAccountName, err)
 			}
-			if secret != nil {
+
+			logger.Printf("Kubernetes secret %s/%s created\n", namespaceName, secretName)
+		} else {
+			logger.Printf("Kubernetes secret %s/%s already exists\n", namespaceName, secretName)
+		}
+
+		// validate the secret type
+		if secret.Type != v1.SecretTypeServiceAccountToken {
+			return fmt.Errorf("secret %s/%s found but it's not a service account token secret! Please, try to delete the secret and let this tool creat it again", namespaceName, secretName)
+		}
+
+		// validate the secret fields
+		validatedSecret := false
+		for tries := 0; tries < 5; tries++ {
+			validatedSecret = validateSecretTokenFields(secret)
+			if validatedSecret {
 				break
 			}
 
-			time.Sleep(250)
-			k8sServiceAccount, err = kubernetes.GetServiceAccount(ctx, namespaceName, serviceAccountName)
+			secret, err = kubernetes.GetSecret(ctx, namespaceName, secretName)
 			if err != nil {
-				return fmt.Errorf("error looking for service account %s: %v", serviceAccountName, err)
-			}
-		}
-
-		serviceAccountToken := ""
-		if secret != nil {
-			serviceAccountToken = string(secret.Data["token"])
-		} else {
-			serviceAccountToken, err = kubernetes.CreateKubernetesToken(ctx, namespaceName, serviceAccountName)
-			if err != nil {
-				return fmt.Errorf("no suitable secret with token for service account, impossible to generate token: %v", err)
+				return fmt.Errorf("error looking for kubernetes secret %s: %v", secretName, err)
 			}
 
-			logger.Printf("Kubernetes token created for service account %s\n", serviceAccountName)
+			time.Sleep(time.Millisecond * 250)
 		}
 
-		kubeconfig, err := kubernetes.CreateKubeconfig(k8sServiceAccount, namespaceName, serviceAccountToken)
+		if !validatedSecret {
+			return fmt.Errorf("error validating secret  %s/%s. It doesn't have token or ca.crt fields", namespaceName, secretName)
+		}
+
+		serviceAccountToken := string(secret.Data["token"])
+		kubeconfig, err := kubernetes.CreateKubeconfig(k8sServiceAccount.Name, namespaceName, serviceAccountToken)
 		if err != nil {
 			return fmt.Errorf("error generating kubernetes kubeconfig: %v", err.Error())
 		}
@@ -271,6 +272,17 @@ func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceSer
 	logger.Printf("Created resource %s inside environment %s\n", serviceConnectionName, azDevOpsEnvironment.Name)
 
 	return nil
+}
+
+func validateSecretTokenFields(secret *v1.Secret) bool {
+	fieldsForValidation := []string{"token", "ca.crt"}
+	for _, field := range fieldsForValidation {
+		if _, ok := secret.Data[field]; !ok {
+			return false
+		}
+	}
+
+	return true
 }
 
 func stringArrayToMap(arrayItems []string) (map[string]string, error) {
