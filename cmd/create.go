@@ -18,8 +18,14 @@ var createCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(createCmd)
 
+	createCmd.PersistentFlags().String("pat", "", "[required] AzureDevOps Personal Access Token (PAT)")
+	err := createCmd.MarkPersistentFlagRequired("pat")
+	if err != nil {
+		logger.Println(err.Error())
+	}
+
 	createCmd.PersistentFlags().StringP("project", "p", "", "[required] AzureDevOps project name with organization (ex: myorg/myproject)")
-	err := createCmd.MarkPersistentFlagRequired("project")
+	err = createCmd.MarkPersistentFlagRequired("project")
 	if err != nil {
 		logger.Println(err.Error())
 	}

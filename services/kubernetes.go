@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 
-	authenticationv1 "k8s.io/api/authentication/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -58,26 +57,6 @@ func (k *Kubernetes) CreateSecret(ctx context.Context, namespace, name, serviceA
 	}
 
 	return secret, nil
-}
-
-func (k *Kubernetes) CreateKubernetesToken(ctx context.Context, namespace, serviceAccountName string) (string, error) {
-	config := k.getConfig()
-	clientset := kubernetes.NewForConfigOrDie(config)
-	var exp = int64(315360000) // 10 years
-	var tokenRequest = authenticationv1.TokenRequest{
-		Spec: authenticationv1.TokenRequestSpec{
-			ExpirationSeconds: &exp,
-		},
-	}
-	token, err := clientset.
-		CoreV1().
-		ServiceAccounts(namespace).
-		CreateToken(ctx, serviceAccountName, &tokenRequest, metav1.CreateOptions{})
-	if err != nil {
-		return "", err
-	}
-
-	return token.Status.Token, nil
 }
 
 func (k *Kubernetes) GetServiceAccount(ctx context.Context, namespace, serviceAccountName string) (*v1.ServiceAccount, error) {

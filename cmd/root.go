@@ -14,8 +14,7 @@ var rootCmd = &cobra.Command{
 	PreRun: toggleDebug,
 	Use:    "azenv",
 	Short:  "AzureDevOps Environment Management",
-	Long: fmt.Sprintf(`This tool can manage Azure DevOps environments (for now, only Kubernetes is supported)
-%s(%s) - %s
+	Long: `This tool can manage Azure DevOps environments (for now, only Kubernetes is supported)
 
 Example:
 azenv create kubernetes \
@@ -28,8 +27,12 @@ azenv create kubernetes \
     --namespace-label label1=value1 \
     --namespace-label label2=value2 \
     --show-kubeconfig=false
-`, Version, GitTag, BuildDate),
+`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			return fmt.Errorf("no arguments")
+		}
+
 		return nil
 	},
 }
@@ -55,11 +58,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().String("pat", "", "[required] AzureDevOps Personal Access Token (PAT)")
-	err := rootCmd.MarkPersistentFlagRequired("pat")
-	if err != nil {
-		logger.Println(err.Error())
-	}
-
 	rootCmd.PersistentFlags().Bool("quiet", false, "Only show output when errors are found")
 }
