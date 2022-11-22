@@ -60,8 +60,8 @@ See above an example, the fields are self-explanatory. Replace <something> by yo
 
 ```sh
 ./azenv \
-  --pat <generate-azure-devops-pat> \
   create kubernetes \
+  --pat <generate-azure-devops-pat> \
   --project <organization-name>/<project-name> \
   --name <environment-name> \
   --service-account <namespace>/<service-account-name> \

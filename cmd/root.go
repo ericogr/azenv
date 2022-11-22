@@ -19,7 +19,6 @@ var rootCmd = &cobra.Command{
 Example:
 azenv create kubernetes \
     --pat your-azuredevops-pat \
-    create kubernetes \
     --name new-test-environment \
     --project totvsappfoundation/TOTVSApps \
     --service-account new-test-namespace/test-sa \

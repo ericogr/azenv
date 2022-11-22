@@ -92,7 +92,7 @@ func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceSer
 	// -----------
 	azDevOpsOrgProjParts := strings.Split(azDevOpsOrgProjectName, "/")
 	if len(azDevOpsOrgProjParts) != 2 {
-		return fmt.Errorf("invalid format for Azure DevOps organization project, please use like this: organization/project-name")
+		return fmt.Errorf("invalid format for Azure DevOps project, please use like this: organization/project-name")
 	}
 	azDevOpsOrganizationName := azDevOpsOrgProjParts[0]
 	azDevOpsProjectName := azDevOpsOrgProjParts[1]
