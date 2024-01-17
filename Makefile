@@ -14,7 +14,7 @@ GOLINT ?= $(GOBIN)/golint
 GOSEC ?= $(GOBIN)/gosec
 GO_MINOR_VERSION = $(shell $(GO) version | cut -c 14- | cut -d' ' -f1 | cut -d'.' -f2)
 GOVULN_MIN_VERSION = 17
-GO_VERSION = 1.18.7
+GO_VERSION = 1.21.6
 
 default:
 	$(MAKE) build

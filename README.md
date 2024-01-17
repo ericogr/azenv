@@ -20,7 +20,7 @@ For Kubernetes resources these are the resources that can be configured:
 |Resource|Type|Can use existent|Notes|
 |--------|----|----------------|-----|
 |Environment|Azure DevOps|Yes|-|
-|Environment Resource|Azure DevOps|No|it must be deleted before creating a new one.|
+|Environment Resource|Azure DevOps|No|it must be deleted before creating a new one|
 |Service Connection|Azure DevOps|Yes|-|
 |Namespace|Kubernetes|Yes|-|
 |Service Account|Kubernetes|Yes|you have to create role/clusterrole and bind to service account your own|

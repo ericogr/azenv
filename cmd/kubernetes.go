@@ -264,7 +264,7 @@ func createKubernetes(pat, azDevOpsOrgProjectName, environmentName, namespaceSer
 		logger.Printf("Created service connection %s already exists\n", serviceConnectionName)
 	}
 
-	err = azdevOps.CreateResourceEnvironment(serviceConnectionName, azDevOpsProjectName, namespaceName, serviceConnection.Id, azDevOpsEnvironment.Id)
+	err = azdevOps.CreateResourceEnvironment(namespaceName, azDevOpsProjectName, namespaceName, serviceConnection.Id, azDevOpsEnvironment.Id)
 	if err != nil {
 		return err
 	}
